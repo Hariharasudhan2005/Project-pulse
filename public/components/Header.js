@@ -2,14 +2,9 @@ import { AppState } from '../state.js';
 
 export function renderHeader(container, state) {
   const currentProject = AppState.getCurrentProject() || { name: 'No Project Selected' };
-  const currentUser = AppState.getCurrentUser() || { name: 'Guest', avatar: 'G' };
-  const users = state.users;
+  const currentUser = AppState.getCurrentUser() || { name: state.currentUser ? state.currentUser.name : 'Guest', avatar: state.currentUser ? state.currentUser.avatar : 'G' };
 
   const isLightTheme = document.body.classList.contains('light-theme');
-
-  const userOptions = users.map(u => 
-    `<option value="${u.id}" ${u.id === state.currentUserId ? 'selected' : ''}>${u.name} (${u.role})</option>`
-  ).join('');
 
   container.innerHTML = `
     <header class="header">
@@ -18,13 +13,11 @@ export function renderHeader(container, state) {
       </div>
       
       <div class="header-actions">
-        <!-- Switch Identity Dropdown -->
-        <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px; margin: 0;">
-          <label style="font-size: 0.75rem; white-space: nowrap;">Simulate User:</label>
-          <select id="user-simulate-select" class="project-select-dropdown" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">
-            ${userOptions}
-          </select>
-        </div>
+        <!-- Logout Button -->
+        <button id="logout-btn" class="btn-secondary" style="padding: 6px 14px; font-size: 0.8rem; height: 36px; display: flex; align-items: center; gap: 6px; margin: 0;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+          Logout
+        </button>
 
         <!-- Light/Dark Mode Toggle -->
         <button id="theme-toggle" class="theme-toggle-btn" title="Toggle Theme">
@@ -44,10 +37,10 @@ export function renderHeader(container, state) {
   `;
 
   // Event handlers
-  const userSelect = container.querySelector('#user-simulate-select');
-  if (userSelect) {
-    userSelect.addEventListener('change', (e) => {
-      AppState.setCurrentUser(e.target.value);
+  const logoutBtn = container.querySelector('#logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      AppState.logout();
     });
   }
 
@@ -60,3 +53,4 @@ export function renderHeader(container, state) {
     });
   }
 }
+

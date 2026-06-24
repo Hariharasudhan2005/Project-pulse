@@ -1,10 +1,7 @@
-/* ==========================================================================
-   ProjectPulse Application Entry & Router (app.js)
-   ========================================================================== */
-
 import { AppState } from './state.js';
 import { renderSidebar } from './components/Sidebar.js';
 import { renderHeader } from './components/Header.js';
+import { renderLoginView } from './components/LoginView.js';
 import { renderDashboardView } from './components/DashboardView.js';
 import { renderKanbanBoard } from './components/KanbanBoard.js';
 import { renderListView } from './components/ListView.js';
@@ -17,7 +14,13 @@ const root = document.getElementById('app-root');
 
 // Main render orchestrator
 function renderApp(state) {
-  // If data hasn't loaded yet, keep showing loader
+  // If not logged in, render Login View
+  if (!state.currentUser) {
+    renderLoginView(root, state);
+    return;
+  }
+
+  // If logged in but workspace data hasn't loaded yet, show loader
   if (!state.projects.length || !state.users.length) {
     root.innerHTML = `
       <div class="loader-container">
@@ -25,6 +28,8 @@ function renderApp(state) {
         <p>Loading ProjectPulse workspace...</p>
       </div>
     `;
+    // Fetch data immediately since we are logged in but don't have it yet
+    AppState.fetchAllData();
     return;
   }
 
@@ -98,10 +103,16 @@ document.addEventListener('open-create-modal', () => {
 // Subscribe to state changes to automatically re-render the app
 AppState.subscribe(renderApp);
 
-// Bootstrapping: Fetch initial workspace data
-AppState.fetchAllData();
+// Bootstrapping: Fetch initial workspace data if session exists
+if (AppState.state.sessionUsername) {
+  AppState.fetchAllData();
+} else {
+  // If no session exists, render login immediately
+  renderApp(AppState.state);
+}
 
 // Poll for database changes (real-time chat and multi-user updates simulation)
 setInterval(() => {
   AppState.fetchAllData();
 }, 4000);
+

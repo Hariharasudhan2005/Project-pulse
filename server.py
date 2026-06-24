@@ -6,19 +6,39 @@ from flask_cors import CORS
 app = Flask(__name__, static_folder='public', static_url_path='')
 CORS(app)  # Enable Cross-Origin Resource Sharing
 
-DB_FILE = os.path.join(os.path.dirname(__file__), 'db.json')
+TEMPLATE_DB = os.path.join(os.path.dirname(__file__), 'db.json')
+USERS_FILE = os.path.join(os.path.dirname(__file__), 'users.json')
 
-# Helper function to read DB
+def get_user_db_path(username):
+    safe_username = "".join(c for c in username if c.isalnum() or c in ('-', '_')).lower()
+    return os.path.join(os.path.dirname(__file__), f'db_{safe_username}.json')
+
+# Helper function to read DB scoped by user session
 def read_db():
-    if not os.path.exists(DB_FILE):
+    username = request.headers.get('X-User-Session')
+    if not username:
         return {"users": [], "projects": [], "tasks": [], "messages": []}
-    with open(DB_FILE, 'r', encoding='utf-8') as f:
+    
+    db_path = get_user_db_path(username)
+    if not os.path.exists(db_path):
+        if os.path.exists(TEMPLATE_DB):
+            import shutil
+            shutil.copy(TEMPLATE_DB, db_path)
+        else:
+            return {"users": [], "projects": [], "tasks": [], "messages": []}
+            
+    with open(db_path, 'r', encoding='utf-8') as f:
         return json.load(f)
 
-# Helper function to write DB
+# Helper function to write DB scoped by user session
 def write_db(data):
-    with open(DB_FILE, 'w', encoding='utf-8') as f:
+    username = request.headers.get('X-User-Session')
+    if not username:
+        return
+    db_path = get_user_db_path(username)
+    with open(db_path, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+
 
 # Root route - serve the index.html from public
 @app.route('/')
@@ -167,6 +187,92 @@ def post_message():
     data['messages'].append(msg)
     write_db(data)
     return jsonify(msg), 201
+
+# ==========================================================================
+# Authentication & User Scoping Endpoints
+# ==========================================================================
+
+def read_users():
+    if not os.path.exists(USERS_FILE):
+        return {}
+    with open(USERS_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+def write_users(users):
+    with open(USERS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(users, f, indent=2, ensure_ascii=False)
+
+@app.route('/api/auth/register', methods=['POST'])
+def register():
+    users = read_users()
+    reg_data = request.json
+    if not reg_data or 'username' not in reg_data or 'password' not in reg_data:
+        return jsonify({"error": "Missing username or password"}), 400
+        
+    username = reg_data['username'].lower().strip()
+    if username in users:
+        return jsonify({"error": "Username already exists"}), 409
+        
+    # Create user account
+    user_id = f"u_{username}"
+    users[username] = {
+        "username": username,
+        "password": reg_data['password'],
+        "id": user_id,
+        "name": reg_data.get('name', username.capitalize()),
+        "role": reg_data.get('role', 'Team Member'),
+        "avatar": "".join([n[0] for n in reg_data.get('name', username).split() if n])[:2].upper()
+    }
+    write_users(users)
+    
+    # Initialize isolated user database file
+    db_path = get_user_db_path(username)
+    if os.path.exists(TEMPLATE_DB) and not os.path.exists(db_path):
+        import shutil
+        shutil.copy(TEMPLATE_DB, db_path)
+        
+    # Inject user into their own database users list so frontend works perfectly
+    if os.path.exists(db_path):
+        with open(db_path, 'r', encoding='utf-8') as f:
+            user_db = json.load(f)
+        
+        user_db.setdefault('users', [])
+        new_user_obj = {
+            "id": user_id,
+            "name": users[username]['name'],
+            "role": users[username]['role'],
+            "avatar": users[username]['avatar']
+        }
+        
+        if not any(u['id'] == user_id for u in user_db['users']):
+            user_db['users'].append(new_user_obj)
+            
+        with open(db_path, 'w', encoding='utf-8') as f:
+            json.dump(user_db, f, indent=2, ensure_ascii=False)
+            
+    return jsonify({"success": True}), 201
+
+@app.route('/api/auth/login', methods=['POST'])
+def login():
+    users = read_users()
+    login_data = request.json
+    if not login_data or 'username' not in login_data or 'password' not in login_data:
+        return jsonify({"error": "Missing username or password"}), 400
+        
+    username = login_data['username'].lower().strip()
+    password = login_data['password']
+    
+    if username not in users or users[username]['password'] != password:
+        return jsonify({"error": "Invalid username or password"}), 401
+        
+    user_info = {
+        "username": username,
+        "id": users[username]['id'],
+        "name": users[username]['name'],
+        "role": users[username]['role'],
+        "avatar": users[username]['avatar']
+    }
+    return jsonify({"success": True, "user": user_info})
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

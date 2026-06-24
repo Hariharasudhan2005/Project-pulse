@@ -6,19 +6,84 @@ const API_BASE = '/api';
 
 class AppStateManager {
   constructor() {
+    const savedUser = sessionStorage.getItem('project_pulse_user');
+    const parsedUser = savedUser ? JSON.parse(savedUser) : null;
+
     this.state = {
       users: [],
       projects: [],
       tasks: [],
       messages: [],
       currentProjectId: 'p1',
-      currentUserId: 'u1',
+      currentUserId: parsedUser ? parsedUser.id : null,
+      currentUser: parsedUser,
+      sessionUsername: parsedUser ? parsedUser.username : null,
       currentView: 'dashboard',
       searchQuery: '',
-      activeTaskId: null // For details modal
+      activeTaskId: null
     };
     this.listeners = [];
   }
+
+  // Authentication Helpers
+  async login(username, password) {
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      if (data.success && data.user) {
+        this.state.currentUser = data.user;
+        this.state.currentUserId = data.user.id;
+        this.state.sessionUsername = data.user.username;
+        sessionStorage.setItem('project_pulse_user', JSON.stringify(data.user));
+        await this.fetchAllData();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Login error:', err);
+      return false;
+    }
+  }
+
+  async register(username, password, name, role) {
+    try {
+      const res = await fetch(`${API_BASE}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, name, role })
+      });
+      return res.ok;
+    } catch (err) {
+      console.error('Registration error:', err);
+      return false;
+    }
+  }
+
+  logout() {
+    sessionStorage.removeItem('project_pulse_user');
+    this.state.currentUser = null;
+    this.state.currentUserId = null;
+    this.state.sessionUsername = null;
+    this.state.users = [];
+    this.state.projects = [];
+    this.state.tasks = [];
+    this.state.messages = [];
+    this.notify();
+  }
+
+  apiHeaders() {
+    const headers = {};
+    if (this.state.sessionUsername) {
+      headers['X-User-Session'] = this.state.sessionUsername;
+    }
+    return headers;
+  }
+
 
   // Register callback for UI re-renders
   subscribe(listener) {
@@ -86,8 +151,11 @@ class AppStateManager {
   // ==========================================================================
 
   async fetchAllData() {
+    if (!this.state.sessionUsername) return;
     try {
-      const res = await fetch(`${API_BASE}/data`);
+      const res = await fetch(`${API_BASE}/data`, {
+        headers: this.apiHeaders()
+      });
       if (!res.ok) throw new Error('Failed to fetch data');
       const data = await res.json();
       
@@ -111,7 +179,7 @@ class AppStateManager {
     try {
       const res = await fetch(`${API_BASE}/tasks`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...this.apiHeaders() },
         body: JSON.stringify({
           ...taskData,
           projectId: this.state.currentProjectId
@@ -132,7 +200,7 @@ class AppStateManager {
     try {
       const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...this.apiHeaders() },
         body: JSON.stringify(updates)
       });
       if (!res.ok) throw new Error('Failed to update task');
@@ -149,7 +217,10 @@ class AppStateManager {
 
   async deleteTask(taskId) {
     try {
-      const res = await fetch(`${API_BASE}/tasks/${taskId}`, { method: 'DELETE' });
+      const res = await fetch(`${API_BASE}/tasks/${taskId}`, {
+        method: 'DELETE',
+        headers: this.apiHeaders()
+      });
       if (!res.ok) throw new Error('Failed to delete task');
       
       this.state.tasks = this.state.tasks.filter(t => t.id !== taskId);
@@ -169,7 +240,7 @@ class AppStateManager {
     try {
       const res = await fetch(`${API_BASE}/tasks/${taskId}/comments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...this.apiHeaders() },
         body: JSON.stringify({
           userId: currentUser.id,
           userName: currentUser.name,
@@ -200,7 +271,7 @@ class AppStateManager {
     try {
       const res = await fetch(`${API_BASE}/tasks/${taskId}/attachments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...this.apiHeaders() },
         body: JSON.stringify({
           name: fileName,
           size: fileSize,
@@ -232,7 +303,7 @@ class AppStateManager {
     try {
       const res = await fetch(`${API_BASE}/messages`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...this.apiHeaders() },
         body: JSON.stringify({
           projectId: this.state.currentProjectId,
           userId: currentUser.id,
