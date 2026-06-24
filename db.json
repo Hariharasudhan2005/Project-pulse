@@ -1,0 +1,203 @@
+{
+  "users": [
+    {
+      "id": "u1",
+      "name": "John Doe",
+      "role": "Project Manager",
+      "avatar": "JD"
+    },
+    {
+      "id": "u2",
+      "name": "Sarah Smith",
+      "role": "Lead Developer",
+      "avatar": "SS"
+    },
+    {
+      "id": "u3",
+      "name": "Alex Chen",
+      "role": "UI/UX Designer",
+      "avatar": "AC"
+    },
+    {
+      "id": "u4",
+      "name": "Emma Watson",
+      "role": "QA Engineer",
+      "avatar": "EW"
+    }
+  ],
+  "projects": [
+    {
+      "id": "p1",
+      "name": "ProjectPulse App",
+      "description": "Developing the core ProjectPulse SaaS application dashboard and features."
+    },
+    {
+      "id": "p2",
+      "name": "Launch Campaign",
+      "description": "Marketing and branding launch strategies for the SaaS product."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "projectId": "p1",
+      "title": "Design Dashboard UI",
+      "description": "Create high-fidelity mockups for the dashboard, including analytics charts and task views. Keep it glassmorphic and dark-themed.",
+      "status": "in-progress",
+      "priority": "high",
+      "dueDate": "2026-07-05",
+      "assigneeId": "u3",
+      "subtasks": [
+        {
+          "id": "s1",
+          "title": "Wireframes",
+          "completed": true
+        },
+        {
+          "id": "s2",
+          "title": "Color palette selection",
+          "completed": true
+        },
+        {
+          "id": "s3",
+          "title": "High-fidelity mockups",
+          "completed": false
+        }
+      ],
+      "comments": [
+        {
+          "id": "c1",
+          "userId": "u1",
+          "userName": "John Doe",
+          "text": "Let's make sure the charts look very interactive.",
+          "timestamp": "2026-06-24T10:30:00Z"
+        },
+        {
+          "id": "c2",
+          "userId": "u3",
+          "userName": "Alex Chen",
+          "text": "Absolutely, using animated SVGs for custom visual fidelity.",
+          "timestamp": "2026-06-24T11:00:00Z"
+        }
+      ],
+      "attachments": [
+        {
+          "id": "a1",
+          "name": "dashboard_concept.png",
+          "size": "1.2 MB",
+          "date": "2026-06-24"
+        }
+      ]
+    },
+    {
+      "id": "t2",
+      "projectId": "p1",
+      "title": "Build REST API Backend",
+      "description": "Create a Flask backend server to persist project state, handle comments, and mock file attachments.",
+      "status": "in-progress",
+      "priority": "high",
+      "dueDate": "2026-06-28",
+      "assigneeId": "u2",
+      "subtasks": [
+        {
+          "id": "s4",
+          "title": "Database schema definition",
+          "completed": true
+        },
+        {
+          "id": "s5",
+          "title": "GET/POST task endpoints",
+          "completed": true
+        },
+        {
+          "id": "s6",
+          "title": "File upload simulation",
+          "completed": false
+        }
+      ],
+      "comments": [],
+      "attachments": []
+    },
+    {
+      "id": "t3",
+      "projectId": "p1",
+      "title": "Write End-to-End Tests",
+      "description": "Establish basic flow tests checking task transitions and comment posting.",
+      "status": "todo",
+      "priority": "medium",
+      "dueDate": "2026-07-10",
+      "assigneeId": "u4",
+      "subtasks": [],
+      "comments": [],
+      "attachments": []
+    },
+    {
+      "id": "t4",
+      "projectId": "p1",
+      "title": "Configure Dev Environment",
+      "description": "Set up project folders, static asset loading, and server routing configurations.",
+      "status": "done",
+      "priority": "low",
+      "dueDate": "2026-06-23",
+      "assigneeId": "u1",
+      "subtasks": [
+        {
+          "id": "s7",
+          "title": "Folder structure setup",
+          "completed": true
+        },
+        {
+          "id": "s8",
+          "title": "Verify local server boot",
+          "completed": true
+        }
+      ],
+      "comments": [],
+      "attachments": []
+    },
+    {
+      "id": "t5",
+      "projectId": "p2",
+      "title": "Create Promotional Assets",
+      "description": "Produce banners, intro videos, and social media flyers for the SaaS launch.",
+      "status": "todo",
+      "priority": "high",
+      "dueDate": "2026-07-15",
+      "assigneeId": "u3",
+      "subtasks": [],
+      "comments": [],
+      "attachments": []
+    },
+    {
+      "title": "scrum",
+      "description": "what to manage ",
+      "priority": "high",
+      "status": "todo",
+      "assigneeId": "u1",
+      "dueDate": "2026-06-23",
+      "subtasks": [],
+      "comments": [],
+      "attachments": [],
+      "projectId": "p1",
+      "id": "t105"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1",
+      "projectId": "p1",
+      "userId": "u1",
+      "userName": "John Doe",
+      "text": "Welcome to ProjectPulse! This is the team collaboration channel. Let's build something awesome.",
+      "timestamp": "2026-06-24T09:00:00Z"
+    },
+    {
+      "id": "m2",
+      "projectId": "p1",
+      "userId": "u2",
+      "userName": "Sarah Smith",
+      "text": "Thanks John! Server endpoints are set up and reading from db.json.",
+      "timestamp": "2026-06-24T09:15:00Z"
+    }
+  ]
+}
